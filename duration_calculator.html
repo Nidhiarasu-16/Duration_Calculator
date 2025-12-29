@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYU Countdown</title>
+    <style>
+        :root {
+            --sea-dark: #001219;
+            --sea-mid: #005f73;
+            --sea-light: #0a9396;
+            --sea-bright: #94d2bd;
+            --accent: #ee9b00;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at center, var(--sea-mid), var(--sea-dark));
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Bubble Animation --- */
+        .bubbles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: rise var(--t) infinite ease-in;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 0.3; }
+            100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
+        }
+
+        /* --- App Container --- */
+        .container {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        h1 {
+            font-weight: 200;
+            letter-spacing: 5px;
+            margin-bottom: 2rem;
+            color: var(--sea-bright);
+            text-shadow: 0 0 10px rgba(148, 210, 189, 0.5);
+        }
+
+        input[type="datetime-local"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--sea-light);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        button {
+            background: var(--sea-light);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.4s;
+            width: 100%;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: var(--sea-bright);
+            color: var(--sea-dark);
+            box-shadow: 0 0 20px var(--sea-light);
+        }
+
+        /* --- Timer Display --- */
+        #timer-display {
+            margin-top: 2rem;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .time-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 5px;
+            border-radius: 15px;
+            border-bottom: 3px solid var(--sea-bright);
+        }
+
+        .time-val {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .time-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+
+        .complete-msg {
+            display: none;
+            margin-top: 20px;
+            color: var(--accent);
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bubbles" id="bubble-container"></div>
+
+<div class="container">
+    <h1>MYU Duration Calculator</h1>
+    
+    <input type="datetime-local" id="target-date">
+    <button onclick="startCountdown()">INITIALIZE COUNTDOWN</button>
+
+    <div id="timer-display">
+        <div class="time-box"><span class="time-val" id="days">00</span><span class="time-label">Days</span></div>
+        <div class="time-box"><span class="time-val" id="hours">00</span><span class="time-label">Hrs</span></div>
+        <div class="time-box"><span class="time-val" id="minutes">00</span><span class="time-label">Min</span></div>
+        <div class="time-box"><span class="time-val" id="seconds">00</span><span class="time-label">Sec</span></div>
+    </div>
+    
+    <div id="status-msg" class="complete-msg">DESTINATION REACHED</div>
+</div>
+
+<script>
+    // Create random bubbles
+    const bubbleContainer = document.getElementById('bubble-container');
+    for (let i = 0; i < 20; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        const size = Math.random() * 40 + 10 + 'px';
+        bubble.style.width = size;
+        bubble.style.height = size;
+        bubble.style.left = Math.random() * 100 + '%';
+        bubble.style.setProperty('--t', Math.random() * 5 + 5 + 's');
+        bubble.style.animationDelay = Math.random() * 5 + 's';
+        bubbleContainer.appendChild(bubble);
+    }
+
+    let countdownInterval;
+
+    function startCountdown() {
+        const targetInput = document.getElementById('target-date').value;
+        const display = document.getElementById('timer-display');
+        const statusMsg = document.getElementById('status-msg');
+
+        if (!targetInput) return;
+
+        const targetDate = new Date(targetInput).getTime();
+        clearInterval(countdownInterval);
+        statusMsg.style.display = "none";
+
+        countdownInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                statusMsg.style.display = "block";
+                display.style.display = "none";
+                return;
+            }
+
+            display.style.display = "grid";
+            document.getElementById('days').innerText = Math.floor(distance / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+            document.getElementById('hours').innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+            document.getElementById('minutes').innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            document.getElementById('seconds').innerText = Math.floor((distance % (1000 * 60)) / 1000).toString().padStart(2, '0');
+        }, 1000);
+    }
+</script>
+
+</body>
+</html>
